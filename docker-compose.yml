@@ -1,0 +1,33 @@
+services:
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: always
+    volumes:
+      # Acesso ao socket do Docker para gerenciamento dos containers da máquina
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      # Persistência dos dados de configuração e usuários do Portainer
+      - "portainer_data:/data"
+    networks:
+      # Conecta à rede externa criada pelo container do Traefik
+      - traefik
+    labels:
+      # Habilita o mapeamento do Traefik para este container
+      - "traefik.enable=true"
+      # Define o domínio de acesso ao Portainer
+      - "traefik.http.routers.portainer.rule=Host(`portainer.keplo.com.br`)"
+      # Define o entrypoint seguro (HTTPS) configurado no Traefik
+      - "traefik.http.routers.portainer.entrypoints=websecure"
+      # Solicita e aplica o certificado Let's Encrypt usando o resolver do Traefik
+      - "traefik.http.routers.portainer.tls.certresolver=myresolver"
+      # Porta interna do container do Portainer para onde o tráfego será direcionado
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+
+networks:
+  # Declaração da rede compartilhada com o Traefik
+  traefik:
+    external: true
+
+volumes:
+  # Volume para armazenamento persistente dos dados do Portainer
+  portainer_data:
